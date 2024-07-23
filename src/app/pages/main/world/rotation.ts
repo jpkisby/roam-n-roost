@@ -1,9 +1,9 @@
 import * as d3 from 'd3';
+import { Country } from '../../../services/main/types';
 import { config } from './config';
 
 export class RotateGlobe {
     #_isDragging: boolean;
-    #_autorotation: unknown;
     #_startX: number;
     #_startY: number;
     #_lastTime: number;
@@ -79,4 +79,11 @@ export class RotateGlobe {
         }
         this.#_lastTime = now;
     };
+
+    rotateCountryIntoView(country: Country) {
+        const rotation = this.#_projection.rotate();
+        rotation[0] = typeof country.geometry.coordinates[0][0][0] === 'number' ? country.geometry.coordinates[0][0][0] : country.geometry.coordinates[0][0][0][0]
+        rotation[1] = typeof country.geometry.coordinates[0][0][0] === 'number' ? country.geometry.coordinates[0][0][0] : country.geometry.coordinates[0][0][0][0]
+        this.#_projection.rotate(rotation);
+    }
 }
