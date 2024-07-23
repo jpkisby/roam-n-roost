@@ -12,5 +12,5 @@ import { CountryComponent } from './pages/country/country.component';
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  title = 'architecture-app';
+  title = 'roam-n-roost';
 }
