@@ -1,13 +1,12 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { WorldComponent } from './pages/main/world/world.component';
-import { CountriesComponent } from './pages/main/countries/countries.component';
 import { CountryComponent } from './pages/country/country.component';
+import { HomeComponent } from './pages/main/home/home.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, WorldComponent, CountriesComponent, CountryComponent],
+  imports: [RouterOutlet, HomeComponent, CountryComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })

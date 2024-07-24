@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { Country } from '../../../services/main/types';
+import { D3GeoCountry } from '../../../services/main/types';
 import { config } from './config';
 
 export class RotateGlobe {
@@ -80,7 +80,7 @@ export class RotateGlobe {
         this.#_lastTime = now;
     };
 
-    rotateCountryIntoView(country: Country) {
+    rotateCountryIntoView(country: D3GeoCountry) {
         const rotation = this.#_projection.rotate();
         rotation[0] = typeof country.geometry.coordinates[0][0][0] === 'number' ? country.geometry.coordinates[0][0][0] : country.geometry.coordinates[0][0][0][0]
         rotation[1] = typeof country.geometry.coordinates[0][0][0] === 'number' ? country.geometry.coordinates[0][0][0] : country.geometry.coordinates[0][0][0][0]

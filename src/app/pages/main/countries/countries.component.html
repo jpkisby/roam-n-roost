@@ -1,4 +1,4 @@
-<ul *ngFor="let country of worldService.countries">
+<ul *ngFor="let country of filteredCountries">
     <li [ngClass]="{ highlighted: country.id === worldService.highlightedCountry?.id }" (mouseenter)="hover(country)">
         <a routerLink="/">{{country.properties?.['name']}}</a>
     </li>

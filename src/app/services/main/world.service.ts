@@ -3,35 +3,50 @@ import * as d3 from 'd3';
 import { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
 import * as topojson from 'topojson';
 import { Objects, Topology } from 'topojson-specification';
-import { Country } from './types';
+import { D3GeoCountry, ExtendedD3GeoCountry } from './types';
+import { CmsCountriesService } from '../country/cms-countries.service';
+import { Country } from '../../types/country.types';
+import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WorldService {
-  #_loading = true;
+  #_world = new BehaviorSubject<Topology<Objects<GeoJsonProperties>> | null>(null);
+  world = this.#_world.asObservable();
+  countries: Observable<ExtendedD3GeoCountry[]>;
 
-  world: Topology<Objects<GeoJsonProperties>> | undefined;
-  countries: Country[] = [];
+  highlightedCountry: ExtendedD3GeoCountry | null = null;
+  selectedCountry: ExtendedD3GeoCountry | null = null;
 
-  highlightedCountry: Country | null = null;
-  selectedCountry: Country | null = null;
-
-  constructor() { 
+  constructor(private cmsCountriesService: CmsCountriesService) {
     this.#_loadWorld();
+    this.countries = combineLatest([
+      this.cmsCountriesService.countries,
+      this.#_world.asObservable()
+    ]).pipe(map(([countries, world]) => this.#_mapCountries(countries, world)));
   }
 
   async #_loadWorld() {
-    this.world = await d3.json<Topology>("https://unpkg.com/world-atlas@2.0.2/countries-110m.json");
-    if (!this.world) {
+    const newWorld = await d3.json<Topology>("https://unpkg.com/world-atlas@2.0.2/countries-110m.json");
+    if (!newWorld) {
       throw new Error('World not found!')
     }
-    const { features } = topojson.feature(this.world, this.world.objects['countries']) as FeatureCollection<Geometry, GeoJsonProperties>;
-    this.countries = (features as Country[]).sort((a, b) => {
-      return a.properties?.['name'] > b.properties?.['name'] ? 1 : -1;
-    });
-    console.log(this.countries)
+    this.#_world.next(newWorld);
+    this.#_world.complete();
+  }
 
-    this.#_loading = false;
+  #_mapCountries(countries: Country[], world: Topology<Objects<GeoJsonProperties>> | null): ExtendedD3GeoCountry[] {
+    if (!world) {
+      return [];
+    }
+
+    const { features } = topojson.feature(world, world.objects['countries']) as FeatureCollection<Geometry, GeoJsonProperties>;
+    return (features as D3GeoCountry[])
+      .sort((a, b) => a.properties?.['name'] > b.properties?.['name'] ? 1 : -1)
+      .map(feature => ({
+        ...feature,
+        existsInCms: countries.findIndex(country => country.id === feature.id) > -1
+      }))
   }
 }

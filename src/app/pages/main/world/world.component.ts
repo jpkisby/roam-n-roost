@@ -5,6 +5,9 @@ import * as topojson from 'topojson';
 import { WorldService } from '../../../services/main/world.service';
 import { config } from './config';
 import { RotateGlobe } from './rotation';
+import { Objects, Topology } from 'topojson-specification';
+import { combineLatest } from 'rxjs';
+import { ExtendedD3GeoCountry } from '../../../services/main/types';
 
 @Component({
   selector: 'app-world',
@@ -17,22 +20,56 @@ export class WorldComponent implements AfterViewInit {
   @ViewChild('globe') globeRef: ElementRef<HTMLCanvasElement> | undefined;
   @ViewChild('currentCountry') currentCountryRef: ElementRef<HTMLParagraphElement> | undefined;
 
-  private projection = d3.geoOrthographic().precision(0.1);
-  private rotateGlobe = new RotateGlobe(this.projection, () => this.#_renderGlobe());
-  private globeContext: CanvasRenderingContext2D | null = null;
+  #_projection = d3.geoOrthographic().precision(0.1);
+  #_rotateGlobe = new RotateGlobe(this.#_projection, () => this.#_renderGlobeUpdates());
+  #_globeContext: CanvasRenderingContext2D | null = null;
+
+  #_world: Topology<Objects<GeoJsonProperties>> | null = null;
+  #_countries: ExtendedD3GeoCountry[] = [];
 
   constructor(private worldService: WorldService) {}
 
   ngAfterViewInit(): void {
+    combineLatest([
+      this.worldService.world,
+      this.worldService.countries
+    ]).subscribe(
+      ([world, countries]) => {
+        this.#_world = world;
+        this.#_countries = countries;
+        this.#_init();
+      }
+    );
+  }
+
+  #_init() {
+    // Verify UI setup
     if (!this.globeRef) {
       throw new Error('Could not generate world!')
     }
 
-    this.globeContext = this.globeRef.nativeElement.getContext('2d');
+    this.#_globeContext = this.globeRef.nativeElement.getContext('2d');
     this.#_scaleGlobe();
-    this.rotateGlobe.setup();
+    this.#_rotateGlobe.setup();
     d3.select('#globe').on('mousemove', (event: MouseEvent) => this.#_hover(event));
   }
+
+  /**
+   * Scale up the globe to look nnice on the page.
+   */
+  #_scaleGlobe() {
+    // Verify UI setup
+    if (!this.#_projection || !this.globeRef) return;
+
+    const width = document.documentElement.clientWidth * config.scaleFactor;
+    const height = document.documentElement.clientHeight * config.scaleFactor;
+    this.globeRef.nativeElement.setAttribute('width', width + 'px');
+    this.globeRef.nativeElement.setAttribute('height', height + 'px');
+    this.#_projection
+      .scale(Math.min(width, height) / 2)
+      .translate([width / 2, height / 2]);
+    this.#_renderGlobeUpdates();
+  };
 
   #_enterCountry(country: Feature<Geometry, GeoJsonProperties>) {
     if (!this.currentCountryRef) return;
@@ -47,11 +84,11 @@ export class WorldComponent implements AfterViewInit {
   };
 
   #_getCountry = (event: MouseEvent) => {
-    const position = this.projection?.invert?.(d3.pointer(event));
+    const position = this.#_projection?.invert?.(d3.pointer(event));
 
-    if (!this.worldService.countries || !position) return null;
+    if (!this.#_countries.length || !position) return null;
 
-    return this.worldService.countries.find((country) =>
+    return this.#_countries.find((country) =>
     {
       const geometry = country.geometry as Polygon | MultiPolygon;
       return geometry.coordinates.find(
@@ -67,37 +104,42 @@ export class WorldComponent implements AfterViewInit {
         if (this.worldService.highlightedCountry) {
             this.#_leaveCountry();
             this.worldService.highlightedCountry = null;
-            this.#_renderGlobe();
+            this.#_renderGlobeUpdates();
         }
         return;
     }
     if (country === this.worldService.highlightedCountry) {
         return;
     }
-    this.worldService.highlightedCountry = country;
-    this.#_renderGlobe();
-    this.#_enterCountry(country);
+    if (country.existsInCms) {
+      this.worldService.highlightedCountry = country;
+      this.#_renderGlobeUpdates();
+      this.#_enterCountry(country);
+    }
   }
 
   #_fillCountry(obj: d3.GeoPermissibleObjects, color: string | CanvasGradient | CanvasPattern) {
-    if (!this.globeContext) return;
+    if (!this.#_globeContext) return;
 
-    this.globeContext.beginPath();
-    const path = d3.geoPath(this.projection).context(this.globeContext ?? null);
+    this.#_globeContext.beginPath();
+    const path = d3.geoPath(this.#_projection).context(this.#_globeContext ?? null);
     path(obj);
-    this.globeContext.fillStyle = color;
-    this.globeContext.fill();
+    this.#_globeContext.fillStyle = color;
+    this.#_globeContext.fill();
   };
 
-  #_renderGlobe() {
-    if (!this.worldService.world) return;
+  #_renderGlobeUpdates() {
+    // Verify data setup
+    if (!this.#_world) return;
 
     const width = document.documentElement.clientWidth;
     const height = document.documentElement.clientHeight;
-    this.globeContext?.clearRect(0, 0, width, height);
+    // TODO julie what does this do?
+    this.#_globeContext?.clearRect(0, 0, width, height);
+    // fill globe with water color
     this.#_fillCountry({ type: 'Sphere' }, config.colors.water);
 
-    const land = topojson.feature(this.worldService.world, this.worldService.world.objects['land']);
+    const land = topojson.feature(this.#_world, this.#_world.objects['land']);
     this.#_fillCountry(land, config.colors.land);
 
     if (this.currentCountryRef && this.worldService.highlightedCountry) {
@@ -105,17 +147,4 @@ export class WorldComponent implements AfterViewInit {
         this.#_fillCountry(this.worldService.highlightedCountry, config.colors.hover);
     }
   }
-
-  #_scaleGlobe() {
-    if (!this.projection || !this.globeRef) return;
-
-    const width = document.documentElement.clientWidth * config.scaleFactor;
-    const height = document.documentElement.clientHeight * config.scaleFactor;
-    this.globeRef.nativeElement.setAttribute('width', width + 'px');
-    this.globeRef.nativeElement.setAttribute('height', height + 'px');
-    this.projection
-      .scale(Math.min(width, height) / 2)
-      .translate([width / 2, height / 2]);
-    this.#_renderGlobe();
-  };
 }
