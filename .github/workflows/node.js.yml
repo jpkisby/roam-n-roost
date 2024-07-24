@@ -32,6 +32,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - run: git checkout gh-pages
+    - run: git reset --hard main
     - run: npm i
     - run: npm run build
     - run: rm -rf .angular/*
