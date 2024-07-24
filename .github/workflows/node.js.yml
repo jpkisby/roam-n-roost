@@ -24,23 +24,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        ref: gh-pages
-        ref: origin/main
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: git checkout gh-pages
-    - run: git reset --hard origin/main
     - run: npm i
     - run: npm run build
-    - run: rm -rf .angular/*
-    - run: rm -rf src/*
-    - run: mv ./dist/roam-n-roost/browser/* .
-    - run: git config user.email "automated-build"
-    - run: git config user.name "Automated build to deploy"
-    - run: git add .
-    - run: git commit -m "Build static pages"
-    - run: git push -f
+
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v4
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist/roost-n-roam
