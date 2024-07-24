@@ -24,12 +24,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: gh-pages
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: git checkout origin/gh-pages
+    - run: git checkout gh-pages
     - run: npm i
     - run: npm run build
     - run: rm -rf .angular/*
