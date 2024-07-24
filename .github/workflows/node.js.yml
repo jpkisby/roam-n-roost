@@ -26,6 +26,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         ref: gh-pages
+        ref: origin/main
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
