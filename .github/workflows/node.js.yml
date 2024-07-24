@@ -5,9 +5,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "gh-pages" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "gh-pages" ]
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -20,14 +20,23 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
+    env:
+      CMS_SPACE_ID: ${{ secrets.CMS_SPACE_ID }}
+      CMS_TOKEN: ${{ secrets.CMS_TOKEN }}
     - uses: actions/checkout@v4
+    - run: git checkout gh-pages
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+    - run: npm i
     - run: npm run build
-    - run: npm test
-    - run: mv ./dist/* .
+    - run: rm -rf .angular/*
+    - run: rm -rf src/*
+    - run: mv ./dist/roam-n-roost/browser/* .
+    - run: git config user.email "automated-build"
+    - run: git config user.name "Automated build to deploy"
     - run: git add .
     - run: git commit -m "Build static pages"
+    - run: git push -f
