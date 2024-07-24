@@ -44,9 +44,13 @@ export class WorldService {
     const { features } = topojson.feature(world, world.objects['countries']) as FeatureCollection<Geometry, GeoJsonProperties>;
     return (features as D3GeoCountry[])
       .sort((a, b) => a.properties?.['name'] > b.properties?.['name'] ? 1 : -1)
-      .map(feature => ({
-        ...feature,
-        existsInCms: countries.findIndex(country => country.id === feature.id) > -1
-      }))
-  }
+      .map(feature => {
+        const cmsCountry = countries.find(country => country.id === feature.id);
+        return {
+          ...feature,
+          existsInCms: !!cmsCountry,
+          nameInCms: cmsCountry?.name || null
+        }
+      })
+    }
 }
