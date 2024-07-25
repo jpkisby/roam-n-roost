@@ -21,7 +21,6 @@ jobs:
     env:
       CMS_SPACE_ID: ${{ secrets.CMS_SPACE_ID }}
       CMS_TOKEN: ${{ secrets.CMS_TOKEN }}
-      ENVIRONMENT: ${{ secrets.ENVIRONMENT }}
 
     steps:
     - uses: actions/checkout@v4
@@ -31,9 +30,6 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - run: npm i
-    - run: touch src/environments/environment.prod.ts
-    - run: echo ${{ secrets.ENVIRONMENT }} >> src/environments/environment.prod.ts
-    - run: echo src/environments/environment.prod.ts
     - run: npm run build
 
     - name: Deploy
