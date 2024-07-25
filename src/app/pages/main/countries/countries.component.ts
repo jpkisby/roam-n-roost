@@ -9,21 +9,21 @@ import { Router, RouterModule } from '@angular/router';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './countries.component.html',
-  styleUrl: './countries.component.scss'
+  styleUrl: './countries.component.scss',
 })
 export class CountriesComponent implements OnInit {
-  filteredCountries: ExtendedD3GeoCountry[] = []
+  filteredCountries: ExtendedD3GeoCountry[] = [];
 
   constructor(public worldService: WorldService) {}
 
   ngOnInit(): void {
     this.worldService.countries.subscribe((countries) => {
-      this.filteredCountries = countries.filter(country => country.existsInCms)
-    })
+      this.filteredCountries = countries.filter((country) => country.existsInCms);
+    });
   }
 
   hover(country: any) {
-    console.log('hovering on', country)
+    console.log('hovering on', country);
     this.worldService.highlightedCountry = country;
   }
 

@@ -9,7 +9,7 @@ import { Country } from '../../types/country.types';
 import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class WorldService {
   #_world = new BehaviorSubject<Topology<Objects<GeoJsonProperties>> | null>(null);
@@ -21,16 +21,15 @@ export class WorldService {
 
   constructor(private cmsCountriesService: CmsCountriesService) {
     this.#_loadWorld();
-    this.countries = combineLatest([
-      this.cmsCountriesService.countries,
-      this.#_world.asObservable()
-    ]).pipe(map(([countries, world]) => this.#_mapCountries(countries, world)));
+    this.countries = combineLatest([this.cmsCountriesService.countries, this.#_world.asObservable()]).pipe(
+      map(([countries, world]) => this.#_mapCountries(countries, world)),
+    );
   }
 
   async #_loadWorld() {
-    const newWorld = await d3.json<Topology>("https://unpkg.com/world-atlas@2.0.2/countries-110m.json");
+    const newWorld = await d3.json<Topology>('https://unpkg.com/world-atlas@2.0.2/countries-110m.json');
     if (!newWorld) {
-      throw new Error('World not found!')
+      throw new Error('World not found!');
     }
     this.#_world.next(newWorld);
     this.#_world.complete();
@@ -41,16 +40,19 @@ export class WorldService {
       return [];
     }
 
-    const { features } = topojson.feature(world, world.objects['countries']) as FeatureCollection<Geometry, GeoJsonProperties>;
+    const { features } = topojson.feature(world, world.objects['countries']) as FeatureCollection<
+      Geometry,
+      GeoJsonProperties
+    >;
     return (features as D3GeoCountry[])
-      .sort((a, b) => a.properties?.['name'] > b.properties?.['name'] ? 1 : -1)
-      .map(feature => {
-        const cmsCountry = countries.find(country => country.id === feature.id);
+      .sort((a, b) => (a.properties?.['name'] > b.properties?.['name'] ? 1 : -1))
+      .map((feature) => {
+        const cmsCountry = countries.find((country) => country.id === feature.id);
         return {
           ...feature,
           existsInCms: !!cmsCountry,
-          nameInCms: cmsCountry?.name || null
-        }
-      })
-    }
+          nameInCms: cmsCountry?.name || null,
+        };
+      });
+  }
 }

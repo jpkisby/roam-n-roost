@@ -8,14 +8,14 @@ import { CmsCountriesService } from '../../../services/country/cms-countries.ser
   standalone: true,
   imports: [WorldComponent, CountriesComponent],
   templateUrl: './home.component.html',
-  styleUrl: './home.component.scss'
+  styleUrl: './home.component.scss',
 })
 export class HomeComponent implements OnInit {
   constructor(private cmsCountriesService: CmsCountriesService) {}
 
   ngOnInit(): void {
-    this.cmsCountriesService.countries.subscribe(data => {
-      console.log(data)
-    })
+    this.cmsCountriesService.countries.subscribe((data) => {
+      console.log(data);
+    });
   }
 }

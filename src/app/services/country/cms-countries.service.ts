@@ -8,7 +8,7 @@ import { entryCmsUrl } from '../../utils/cms';
 const contentType = 'countryPage';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CmsCountriesService {
   #_countries = new BehaviorSubject<Country[]>([]);
@@ -19,19 +19,24 @@ export class CmsCountriesService {
   }
 
   #_init() {
-    this.httpClient.get<CmsArray<CmsCountry>>(`${entryCmsUrl}&content_type=${contentType}`).pipe(
-      tap((response) => {
-        if (response.items.length === 0) {
-          throw new Error('No countries found!')
-        }
-      }),
-      map((response) => response.items.map(country => ({
-        id: country.fields.id,
-        name: country.fields.name,
-        heroLarge: null
-      })))
-    ).subscribe(countries => {
-      this.#_countries.next(countries);
-    })
+    this.httpClient
+      .get<CmsArray<CmsCountry>>(`${entryCmsUrl}&content_type=${contentType}`)
+      .pipe(
+        tap((response) => {
+          if (response.items.length === 0) {
+            throw new Error('No countries found!');
+          }
+        }),
+        map((response) =>
+          response.items.map((country) => ({
+            id: country.fields.id,
+            name: country.fields.name,
+            heroLarge: null,
+          })),
+        ),
+      )
+      .subscribe((countries) => {
+        this.#_countries.next(countries);
+      });
   }
 }

@@ -8,7 +8,7 @@ import { HomeComponent } from './pages/main/home/home.component';
   standalone: true,
   imports: [RouterOutlet, HomeComponent, CountryComponent],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  styleUrl: './app.component.scss',
 })
 export class AppComponent {
   title = 'roam-n-roost';

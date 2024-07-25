@@ -9,11 +9,11 @@ import { Country } from '../../types/country.types';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './country.component.html',
-  styleUrl: './country.component.scss'
+  styleUrl: './country.component.scss',
 })
 export class CountryComponent implements OnInit {
   @Input() countryName = '';
-  
+
   country: Observable<Country> | undefined;
 
   constructor(public countryService: CmsCountryService) {}

@@ -14,7 +14,7 @@ import { ExtendedD3GeoCountry } from '../../../services/main/types';
   standalone: true,
   imports: [],
   templateUrl: './world.component.html',
-  styleUrl: './world.component.scss'
+  styleUrl: './world.component.scss',
 })
 export class WorldComponent implements AfterViewInit {
   @ViewChild('globe') globeRef: ElementRef<HTMLCanvasElement> | undefined;
@@ -30,22 +30,17 @@ export class WorldComponent implements AfterViewInit {
   constructor(private worldService: WorldService) {}
 
   ngAfterViewInit(): void {
-    combineLatest([
-      this.worldService.world,
-      this.worldService.countries
-    ]).subscribe(
-      ([world, countries]) => {
-        this.#_world = world;
-        this.#_countries = countries;
-        this.#_init();
-      }
-    );
+    combineLatest([this.worldService.world, this.worldService.countries]).subscribe(([world, countries]) => {
+      this.#_world = world;
+      this.#_countries = countries;
+      this.#_init();
+    });
   }
 
   #_init() {
     // Verify UI setup
     if (!this.globeRef) {
-      throw new Error('Could not generate world!')
+      throw new Error('Could not generate world!');
     }
 
     this.#_globeContext = this.globeRef.nativeElement.getContext('2d');
@@ -65,51 +60,49 @@ export class WorldComponent implements AfterViewInit {
     const height = document.documentElement.clientHeight * config.scaleFactor;
     this.globeRef.nativeElement.setAttribute('width', width + 'px');
     this.globeRef.nativeElement.setAttribute('height', height + 'px');
-    this.#_projection
-      .scale(Math.min(width, height) / 2)
-      .translate([width / 2, height / 2]);
+    this.#_projection.scale(Math.min(width, height) / 2).translate([width / 2, height / 2]);
     this.#_renderGlobeUpdates();
-  };
+  }
 
   #_enterCountry(country: Feature<Geometry, GeoJsonProperties>) {
     if (!this.currentCountryRef) return;
 
     this.currentCountryRef.nativeElement.innerText = country.properties?.['name'];
-  };
-  
+  }
+
   #_leaveCountry() {
     if (!this.currentCountryRef) return;
 
     this.currentCountryRef.nativeElement.innerText = '';
-  };
+  }
 
   #_getCountry = (event: MouseEvent) => {
     const position = this.#_projection?.invert?.(d3.pointer(event));
 
     if (!this.#_countries.length || !position) return null;
 
-    return this.#_countries.find((country) =>
-    {
+    return this.#_countries.find((country) => {
       const geometry = country.geometry as Polygon | MultiPolygon;
       return geometry.coordinates.find(
-        (c1) => d3.polygonContains(c1 as [number, number][], position) || c1.some((c2) => d3.polygonContains(c2 as [number, number][], position))
-      )
-    }
-    );
+        (c1) =>
+          d3.polygonContains(c1 as [number, number][], position) ||
+          c1.some((c2) => d3.polygonContains(c2 as [number, number][], position)),
+      );
+    });
   };
 
   #_hover(event: MouseEvent) {
     const country = this.#_getCountry(event);
     if (!country) {
-        if (this.worldService.highlightedCountry) {
-            this.#_leaveCountry();
-            this.worldService.highlightedCountry = null;
-            this.#_renderGlobeUpdates();
-        }
-        return;
+      if (this.worldService.highlightedCountry) {
+        this.#_leaveCountry();
+        this.worldService.highlightedCountry = null;
+        this.#_renderGlobeUpdates();
+      }
+      return;
     }
     if (country === this.worldService.highlightedCountry) {
-        return;
+      return;
     }
     if (country.existsInCms) {
       this.worldService.highlightedCountry = country;
@@ -126,7 +119,7 @@ export class WorldComponent implements AfterViewInit {
     path(obj);
     this.#_globeContext.fillStyle = color;
     this.#_globeContext.fill();
-  };
+  }
 
   #_renderGlobeUpdates() {
     // Verify data setup
@@ -143,8 +136,8 @@ export class WorldComponent implements AfterViewInit {
     this.#_fillCountry(land, config.colors.land);
 
     if (this.currentCountryRef && this.worldService.highlightedCountry) {
-        this.currentCountryRef.nativeElement.classList.add('visible')
-        this.#_fillCountry(this.worldService.highlightedCountry, config.colors.hover);
+      this.currentCountryRef.nativeElement.classList.add('visible');
+      this.#_fillCountry(this.worldService.highlightedCountry, config.colors.hover);
     }
   }
 }
