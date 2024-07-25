@@ -4,7 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "npm run config && ng build",
+    "build": "npm run config && ng build && npm run generate-cname",
+    "generate-cname": "echo \"roamnroost.com\" > dist/roam-n-roost/browser/CNAME",
     "config": "node ./src/environments/setup-env.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
