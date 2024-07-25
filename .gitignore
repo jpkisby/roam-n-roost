@@ -30,7 +30,6 @@ yarn-error.log
 
 # Miscellaneous
 /.angular/cache
-/src/environments_dep/*
 /src/environments/*
 .sass-cache/
 /connect.lock
