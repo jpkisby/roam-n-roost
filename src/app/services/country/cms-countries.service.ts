@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { AsyncSubject, BehaviorSubject, map, tap } from 'rxjs';
 import { CmsArray } from '../../types/cms.types';
 import { CmsCountry, Country } from '../../types/country.types';
-import { baseCmsUrl } from '../../utils/cms';
+import { entryCmsUrl } from '../../utils/cms';
 
 const contentType = 'countryPage';
 
@@ -19,7 +19,7 @@ export class CmsCountriesService {
   }
 
   #_init() {
-    this.httpClient.get<CmsArray<CmsCountry>>(`${baseCmsUrl}&content_type=${contentType}`).pipe(
+    this.httpClient.get<CmsArray<CmsCountry>>(`${entryCmsUrl}&content_type=${contentType}`).pipe(
       tap((response) => {
         if (response.items.length === 0) {
           throw new Error('No countries found!')
@@ -27,7 +27,8 @@ export class CmsCountriesService {
       }),
       map((response) => response.items.map(country => ({
         id: country.fields.id,
-        name: country.fields.name
+        name: country.fields.name,
+        heroLarge: null
       })))
     ).subscribe(countries => {
       this.#_countries.next(countries);

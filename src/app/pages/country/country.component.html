@@ -1,3 +1,4 @@
 <div *ngIf="country | async as country">
-    <p>{{country.name}}</p>
+    <img *ngIf="country.heroLarge" [src]="country.heroLarge.url" class="hero" />
+    <h1>{{country.name}}</h1>
 </div>
