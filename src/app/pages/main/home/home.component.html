@@ -1,2 +1,43 @@
-<app-world></app-world>
-<app-countries></app-countries>
+<ng-container *ngTemplateOutlet="mobileLayout"></ng-container>
+<ng-container *ngTemplateOutlet="desktopLayout"></ng-container>
+
+<ng-template #world>
+  <div>
+    <app-world></app-world>
+  </div>
+</ng-template>
+
+<ng-template #landing>
+  <h1>Roam n Roost</h1>
+  <ng-container *ngIf="homeService.homePage | async as homePage">
+    <p>{{ homePage.landing }}</p>
+  </ng-container>
+</ng-template>
+
+<ng-template #mobileLayout>
+  <div class="mobile-layout">
+    <button class="mobile-alternate-display-button" (click)="toggleMobileAlternateDisplay()">L</button>
+    @if (mobileAlternateDisplayIsActive) {
+      <ng-container *ngTemplateOutlet="mobileAlternateLayout"></ng-container>
+    } @else {
+      <ng-container *ngTemplateOutlet="world"></ng-container>
+    }
+  </div>
+</ng-template>
+
+<ng-template #mobileAlternateLayout>
+  <ng-container *ngTemplateOutlet="landing"></ng-container>
+  <div class="country-list">
+    <app-countries></app-countries>
+  </div>
+</ng-template>
+
+<ng-template #desktopLayout>
+  <div class="desktop-layout">
+    <div>
+      <ng-container *ngTemplateOutlet="landing"></ng-container>
+    </div>
+    <ng-container *ngTemplateOutlet="world"></ng-container>
+    <app-countries></app-countries>
+  </div>
+</ng-template>

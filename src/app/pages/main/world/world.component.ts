@@ -1,13 +1,13 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import * as d3 from 'd3';
 import { Feature, GeoJsonProperties, Geometry, MultiPolygon, Polygon } from 'geojson';
+import { combineLatest } from 'rxjs';
 import * as topojson from 'topojson';
+import { Objects, Topology } from 'topojson-specification';
+import { ExtendedD3GeoCountry } from '../../../services/main/types';
 import { WorldService } from '../../../services/main/world.service';
 import { config } from './config';
 import { RotateGlobe } from './rotation';
-import { Objects, Topology } from 'topojson-specification';
-import { combineLatest } from 'rxjs';
-import { ExtendedD3GeoCountry } from '../../../services/main/types';
 
 @Component({
   selector: 'app-world',
@@ -56,11 +56,17 @@ export class WorldComponent implements AfterViewInit {
     // Verify UI setup
     if (!this.#_projection || !this.globeRef) return;
 
-    const width = document.documentElement.clientWidth * config.scaleFactor;
-    const height = document.documentElement.clientHeight * config.scaleFactor;
+    const documentHeight = document.documentElement.clientWidth;
+    const width = this.globeRef.nativeElement.clientWidth;
+    const height = this.globeRef.nativeElement.clientHeight;
     this.globeRef.nativeElement.setAttribute('width', width + 'px');
     this.globeRef.nativeElement.setAttribute('height', height + 'px');
-    this.#_projection.scale(Math.min(width, height) / 2).translate([width / 2, height / 2]);
+
+    const size = Math.min(width, height, documentHeight) * config.scaleFactor;
+
+    this.#_projection
+      .fitSize([size, size], { type: 'FeatureCollection', features: this.#_countries })
+      .translate([width / 2, height / 2]);
     this.#_renderGlobeUpdates();
   }
 
@@ -117,18 +123,19 @@ export class WorldComponent implements AfterViewInit {
     this.#_globeContext.beginPath();
     const path = d3.geoPath(this.#_projection).context(this.#_globeContext ?? null);
     path(obj);
+
     this.#_globeContext.fillStyle = color;
     this.#_globeContext.fill();
   }
 
   #_renderGlobeUpdates() {
     // Verify data setup
-    if (!this.#_world) return;
+    if (!this.#_world || !this.#_globeContext) return;
 
     const width = document.documentElement.clientWidth;
     const height = document.documentElement.clientHeight;
     // TODO julie what does this do?
-    this.#_globeContext?.clearRect(0, 0, width, height);
+    this.#_globeContext.clearRect(0, 0, width, height);
     // fill globe with water color
     this.#_fillCountry({ type: 'Sphere' }, config.colors.water);
 

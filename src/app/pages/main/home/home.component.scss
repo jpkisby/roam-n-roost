@@ -1,0 +1,35 @@
+@import '../../../styles/mixins.scss';
+
+.desktop-layout {
+  display: none;
+  @include for-desktop-up {
+    display: grid;
+    grid-template-columns: 1fr 3fr 1fr;
+    height: 100vh;
+    overflow-y: hidden;
+  }
+}
+
+.mobile-layout {
+  @include for-desktop-up {
+    display: none;
+  }
+}
+
+// .landing {
+//   background-color: rgba(191, 160, 130, 0.3);
+//   box-shadow: 10px 0px 10px 0px rgba(191, 160, 130, 0.5);
+//   padding: 24px;
+// }
+
+// .country-list {
+//   background-color: rgba(191, 160, 130, 0.3);
+//   box-shadow: -10px 0px 10px 0px rgba(191, 160, 130, 0.5);
+//   height: 100%;
+//   overflow-y: auto;
+//   padding: 24px;
+
+//   @include for-tablet-landscape-up {
+//     background-color: green;
+//   }
+// }

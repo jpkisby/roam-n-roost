@@ -5,14 +5,8 @@ export const config = {
   degPerSec: 5,
   angles: { x: -100, y: -20, z: 0 },
   colors: {
-    water: '#0C373Eff',
-    land: '#A7763Bff',
-    hover: '#CEBAA2ff',
-
-    //         --dun: #CEBAA2ff;
-    // --caput-mortuum: #6A2A21ff;
-    // --midnight-green: #0C373Eff;
-    // --dark-green: #1B3518ff;
-    // --copper: #A7763Bff;
+    water: '#4d675a',
+    land: '#847b45',
+    hover: '#B1A45B',
   },
 };
