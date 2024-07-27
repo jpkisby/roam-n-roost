@@ -22,7 +22,7 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.cmsCountriesService.countries.subscribe((data) => {
-      console.log(data);
+      // console.log(data);
     });
   }
 
