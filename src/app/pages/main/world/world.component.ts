@@ -1,7 +1,7 @@
 import { afterNextRender, AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import * as d3 from 'd3';
 import { Feature, GeoJsonProperties, Geometry, MultiPolygon, Polygon } from 'geojson';
-import { combineLatest, Subscription } from 'rxjs';
+import { combineLatest, forkJoin, Subscription } from 'rxjs';
 import * as topojson from 'topojson';
 import { Objects, Topology } from 'topojson-specification';
 import { ExtendedD3GeoCountry } from '../../../services/main/types';
@@ -47,7 +47,7 @@ export class WorldComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    combineLatest([this.worldService.world, this.worldService.countries]).subscribe(([world, countries]) => {
+    forkJoin([this.worldService.world, this.worldService.countries]).subscribe(([world, countries]) => {
       this.#_world = world;
       this.#_countries = countries;
       this.#_init();
@@ -152,7 +152,6 @@ export class WorldComponent implements AfterViewInit, OnDestroy {
 
     const width = document.documentElement.clientWidth;
     const height = document.documentElement.clientHeight;
-    // TODO julie what does this do?
     this.#_globeContext.clearRect(0, 0, width, height);
     // fill globe with water color
     this.#_fillCountry({ type: 'Sphere' }, config.colors.water);

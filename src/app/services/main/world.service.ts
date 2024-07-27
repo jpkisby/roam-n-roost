@@ -6,22 +6,21 @@ import { Objects, Topology } from 'topojson-specification';
 import { D3GeoCountry, ExtendedD3GeoCountry } from './types';
 import { CmsCountriesService } from '../country/cms-countries.service';
 import { Country } from '../../types/country.types';
-import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
+import { BehaviorSubject, combineLatest, forkJoin, map, Observable, tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class WorldService {
-  #_world = new BehaviorSubject<Topology<Objects<GeoJsonProperties>> | null>(null);
-  world = this.#_world.asObservable();
-  countries: Observable<ExtendedD3GeoCountry[]>;
+  world = new BehaviorSubject<Topology<Objects<GeoJsonProperties>> | null>(null);
+  countries = new Observable<ExtendedD3GeoCountry[]>();
 
   highlightedCountry: ExtendedD3GeoCountry | null = null;
   selectedCountry: ExtendedD3GeoCountry | null = null;
 
   constructor(private cmsCountriesService: CmsCountriesService) {
     this.#_loadWorld();
-    this.countries = combineLatest([this.cmsCountriesService.countries, this.#_world.asObservable()]).pipe(
+    this.countries = forkJoin([this.cmsCountriesService.countries, this.world]).pipe(
       map(([countries, world]) => this.#_mapCountries(countries, world)),
     );
   }
@@ -31,8 +30,8 @@ export class WorldService {
     if (!newWorld) {
       throw new Error('World not found!');
     }
-    this.#_world.next(newWorld);
-    this.#_world.complete();
+    this.world.next(newWorld);
+    this.world.complete();
   }
 
   #_mapCountries(countries: Country[], world: Topology<Objects<GeoJsonProperties>> | null): ExtendedD3GeoCountry[] {
