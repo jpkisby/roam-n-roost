@@ -66,25 +66,26 @@ export class WorldComponent implements AfterViewInit, OnDestroy {
     d3.select('#globe').on('mousemove', (event: MouseEvent) => this.#_hover(event));
   }
 
-  /**
-   * Scale up the globe to look nnice on the page.
-   */
   #_scaleGlobe() {
     // Verify UI setup
-    if (!this.#_projection || !this.globeRef) return;
+    if (!this.#_projection || !this.globeRef || !this.globeRef.nativeElement.parentElement) return;
 
-    const documentHeight = document.documentElement.clientWidth;
-    const width = this.globeRef.nativeElement.clientWidth;
-    const height = this.globeRef.nativeElement.clientHeight;
+    const padding = 16;
+
+    const documentHeight = document.documentElement.clientHeight;
+    const width = this.globeRef.nativeElement.parentElement.clientWidth - padding;
+    const height = this.globeRef.nativeElement.parentElement.clientHeight - padding;
     this.globeRef.nativeElement.setAttribute('width', width + 'px');
     this.globeRef.nativeElement.setAttribute('height', height + 'px');
 
-    const scaleFactor = this.screenSizeService.isScreenSizeDesktopUp() ? config.scaleFactor : 0.95;
+    const scaleFactor = this.screenSizeService.isScreenSizeDesktopUp()
+      ? config.desktopScaleFactor
+      : config.mobileScaleFactor;
     const size = Math.min(width, height, documentHeight) * scaleFactor;
 
     this.#_projection
       .fitSize([size, size], { type: 'FeatureCollection', features: this.#_countries })
-      .translate([width / 2, height / 2]);
+      .translate([(width + padding) / 2, (height + padding) / 2]);
     this.#_renderGlobeUpdates();
   }
 

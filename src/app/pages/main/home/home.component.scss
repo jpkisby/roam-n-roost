@@ -1,20 +1,25 @@
 @import '../../../styles/mixins.scss';
 
-.desktop-layout {
-  display: none;
-  @include for-desktop-up {
-    display: grid;
-    grid-template-columns: 1fr 3fr 1fr;
-    height: 100vh;
-    overflow-y: hidden;
-  }
+.container {
+  height: 100vh;
+  width: 100vw;
 }
 
-.mobile-layout {
-  @include for-desktop-up {
-    display: none;
-  }
-}
+// .desktop-layout {
+//   display: none;
+//   @include for-desktop-up {
+//     display: grid;
+//     grid-template-columns: 1fr 3fr 1fr;
+//     height: 100vh;
+//     overflow-y: hidden;
+//   }
+// }
+
+// .mobile-layout {
+//   @include for-desktop-up {
+//     display: none;
+//   }
+// }
 
 // .landing {
 //   background-color: rgba(191, 160, 130, 0.3);

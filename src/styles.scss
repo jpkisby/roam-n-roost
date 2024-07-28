@@ -4,6 +4,10 @@ body {
   background-color: #f4debe;
   color: #191617;
 
+  * + * {
+    box-sizing: border-box;
+  }
+
   --dutch-white: #f4debe;
   --lion: #bfa082;
   --olive: #847b45;
