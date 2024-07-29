@@ -1,11 +1,12 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { afterNextRender, AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import * as d3 from 'd3';
 import { Feature, GeoJsonProperties, Geometry, MultiPolygon, Polygon } from 'geojson';
-import { combineLatest } from 'rxjs';
+import { AsyncSubject, BehaviorSubject, combineLatest, filter, forkJoin, Subscription, take } from 'rxjs';
 import * as topojson from 'topojson';
 import { Objects, Topology } from 'topojson-specification';
 import { ExtendedD3GeoCountry } from '../../../services/main/types';
 import { WorldService } from '../../../services/main/world.service';
+import { ScreenSizeService } from '../../../services/utils/screen-size.service';
 import { config } from './config';
 import { RotateGlobe } from './rotation';
 
@@ -16,25 +17,54 @@ import { RotateGlobe } from './rotation';
   templateUrl: './world.component.html',
   styleUrl: './world.component.scss',
 })
-export class WorldComponent implements AfterViewInit {
+export class WorldComponent implements AfterViewInit, OnDestroy {
+  // HTML elements
   @ViewChild('globe') globeRef: ElementRef<HTMLCanvasElement> | undefined;
   @ViewChild('currentCountry') currentCountryRef: ElementRef<HTMLParagraphElement> | undefined;
 
+  // Backend data
+  #_world: Topology<Objects<GeoJsonProperties>> | null = null;
+  #_countries: ExtendedD3GeoCountry[] = [];
+
+  // Screen data
   #_projection = d3.geoOrthographic().precision(0.1);
   #_rotateGlobe = new RotateGlobe(this.#_projection, () => this.#_renderGlobeUpdates());
   #_globeContext: CanvasRenderingContext2D | null = null;
 
-  #_world: Topology<Objects<GeoJsonProperties>> | null = null;
-  #_countries: ExtendedD3GeoCountry[] = [];
+  // Observers and subscriptions
+  #_globeDataIsReady = new BehaviorSubject<boolean>(false);
+  #_resizeSubscription: Subscription | undefined;
+  #_globeDataSubscription: Subscription | undefined;
+  #_globeDataIsReadySubscription: Subscription | undefined;
 
-  constructor(private worldService: WorldService) {}
+  constructor(
+    private worldService: WorldService,
+    private screenSizeService: ScreenSizeService,
+  ) {
+    afterNextRender(() => {
+      this.#_scaleGlobe();
+      this.#_resizeSubscription = this.screenSizeService.resizeEvent().subscribe(() => {
+        this.#_scaleGlobe();
+      });
+      this.#_globeDataIsReadySubscription = this.#_globeDataIsReady
+        .pipe(
+          filter((globeDataIsReady) => globeDataIsReady),
+          take(1),
+        )
+        .subscribe(() => {
+          this.#_init();
+        });
+    });
+  }
 
   ngAfterViewInit(): void {
-    combineLatest([this.worldService.world, this.worldService.countries]).subscribe(([world, countries]) => {
-      this.#_world = world;
-      this.#_countries = countries;
-      this.#_init();
-    });
+    this.#_globeDataSubscription = forkJoin([this.worldService.world, this.worldService.countries]).subscribe(
+      ([world, countries]) => {
+        this.#_world = world;
+        this.#_countries = countries;
+        this.#_globeDataIsReady.next(true);
+      },
+    );
   }
 
   #_init() {
@@ -49,24 +79,26 @@ export class WorldComponent implements AfterViewInit {
     d3.select('#globe').on('mousemove', (event: MouseEvent) => this.#_hover(event));
   }
 
-  /**
-   * Scale up the globe to look nnice on the page.
-   */
   #_scaleGlobe() {
     // Verify UI setup
-    if (!this.#_projection || !this.globeRef) return;
+    if (!this.#_projection || !this.globeRef || !this.globeRef.nativeElement.parentElement) return;
 
-    const documentHeight = document.documentElement.clientWidth;
-    const width = this.globeRef.nativeElement.clientWidth;
-    const height = this.globeRef.nativeElement.clientHeight;
+    const padding = 16;
+
+    const documentHeight = document.documentElement.clientHeight;
+    const width = this.globeRef.nativeElement.parentElement.clientWidth - padding;
+    const height = this.globeRef.nativeElement.parentElement.clientHeight - padding;
     this.globeRef.nativeElement.setAttribute('width', width + 'px');
     this.globeRef.nativeElement.setAttribute('height', height + 'px');
 
-    const size = Math.min(width, height, documentHeight) * config.scaleFactor;
+    const scaleFactor = this.screenSizeService.isScreenSizeDesktopUp()
+      ? config.desktopScaleFactor
+      : config.mobileScaleFactor;
+    const size = Math.min(width, height, documentHeight) * scaleFactor;
 
     this.#_projection
       .fitSize([size, size], { type: 'FeatureCollection', features: this.#_countries })
-      .translate([width / 2, height / 2]);
+      .translate([(width + padding) / 2, (height + padding) / 2]);
     this.#_renderGlobeUpdates();
   }
 
@@ -134,7 +166,6 @@ export class WorldComponent implements AfterViewInit {
 
     const width = document.documentElement.clientWidth;
     const height = document.documentElement.clientHeight;
-    // TODO julie what does this do?
     this.#_globeContext.clearRect(0, 0, width, height);
     // fill globe with water color
     this.#_fillCountry({ type: 'Sphere' }, config.colors.water);
@@ -146,5 +177,11 @@ export class WorldComponent implements AfterViewInit {
       this.currentCountryRef.nativeElement.classList.add('visible');
       this.#_fillCountry(this.worldService.highlightedCountry, config.colors.hover);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.#_resizeSubscription?.unsubscribe();
+    this.#_globeDataSubscription?.unsubscribe();
+    this.#_globeDataIsReadySubscription?.unsubscribe();
   }
 }

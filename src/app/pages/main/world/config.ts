@@ -1,7 +1,9 @@
 export const config = {
-  rotationDelay: 0,
+  // speed when user drags globe
   rotationSensitivity: 0.25,
-  scaleFactor: 0.75,
+  // how much of parent component globe takes up
+  mobileScaleFactor: 0.9,
+  desktopScaleFactor: 0.75,
   degPerSec: 5,
   angles: { x: -100, y: -20, z: 0 },
   colors: {
