@@ -1,7 +1,7 @@
 import { afterNextRender, AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import * as d3 from 'd3';
 import { Feature, GeoJsonProperties, Geometry, MultiPolygon, Polygon } from 'geojson';
-import { combineLatest, forkJoin, Subscription } from 'rxjs';
+import { AsyncSubject, BehaviorSubject, combineLatest, filter, forkJoin, Subscription, take } from 'rxjs';
 import * as topojson from 'topojson';
 import { Objects, Topology } from 'topojson-specification';
 import { ExtendedD3GeoCountry } from '../../../services/main/types';
@@ -32,7 +32,10 @@ export class WorldComponent implements AfterViewInit, OnDestroy {
   #_globeContext: CanvasRenderingContext2D | null = null;
 
   // Observers and subscriptions
+  #_globeDataIsReady = new BehaviorSubject<boolean>(false);
   #_resizeSubscription: Subscription | undefined;
+  #_globeDataSubscription: Subscription | undefined;
+  #_globeDataIsReadySubscription: Subscription | undefined;
 
   constructor(
     private worldService: WorldService,
@@ -43,15 +46,25 @@ export class WorldComponent implements AfterViewInit, OnDestroy {
       this.#_resizeSubscription = this.screenSizeService.resizeEvent().subscribe(() => {
         this.#_scaleGlobe();
       });
+      this.#_globeDataIsReadySubscription = this.#_globeDataIsReady
+        .pipe(
+          filter((globeDataIsReady) => globeDataIsReady),
+          take(1),
+        )
+        .subscribe(() => {
+          this.#_init();
+        });
     });
   }
 
   ngAfterViewInit(): void {
-    forkJoin([this.worldService.world, this.worldService.countries]).subscribe(([world, countries]) => {
-      this.#_world = world;
-      this.#_countries = countries;
-      this.#_init();
-    });
+    this.#_globeDataSubscription = forkJoin([this.worldService.world, this.worldService.countries]).subscribe(
+      ([world, countries]) => {
+        this.#_world = world;
+        this.#_countries = countries;
+        this.#_globeDataIsReady.next(true);
+      },
+    );
   }
 
   #_init() {
@@ -168,5 +181,7 @@ export class WorldComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.#_resizeSubscription?.unsubscribe();
+    this.#_globeDataSubscription?.unsubscribe();
+    this.#_globeDataIsReadySubscription?.unsubscribe();
   }
 }
