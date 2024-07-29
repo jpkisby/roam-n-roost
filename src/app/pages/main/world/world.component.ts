@@ -173,8 +173,7 @@ export class WorldComponent implements AfterViewInit, OnDestroy {
     const land = topojson.feature(this.#_world, this.#_world.objects['land']);
     this.#_fillCountry(land, config.colors.land);
 
-    if (this.currentCountryRef && this.worldService.highlightedCountry) {
-      this.currentCountryRef.nativeElement.classList.add('visible');
+    if (this.worldService.highlightedCountry) {
       this.#_fillCountry(this.worldService.highlightedCountry, config.colors.hover);
     }
   }
